@@ -62,11 +62,16 @@ export default function CourseDetails() {
             {enrolling ? '...' : t('enroll_now')}
           </button>
         ) : (
-          <div className="progress-summary">
-            <div className="progress-bar" style={{ width: 200, height: 10 }}>
-              <div className="progress-bar-fill" style={{ width: `${progress.progress}%` }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="progress-summary">
+              <div className="progress-bar" style={{ width: 200, height: 10 }}>
+                <div className="progress-bar-fill" style={{ width: `${progress?.progress ?? 0}%` }} />
+              </div>
+              <span>{progress?.progress ?? 0}% {t('completed')}</span>
             </div>
-            <span>{progress.progress}% {t('completed')}</span>
+            {progress?.is_completed && (
+              <span className="badge badge-success">Completed</span>
+            )}
           </div>
         )}
       </div>
@@ -83,9 +88,15 @@ export default function CourseDetails() {
         {course.lessons?.length ? (
           <div>
             <p style={{ marginBottom: '1rem' }}>{course.lesson_count} {t('lessons')}</p>
-            <Link to={`/courses/${courseId}/lessons`} className="btn btn-primary">
-              {myEnrollment ? t('continue_course') : t('view_enroll')}
-            </Link>
+            {progress?.is_completed ? (
+              <span className="btn btn-primary" style={{ opacity: 0.9, cursor: 'default', pointerEvents: 'none' }}>
+                Completed
+              </span>
+            ) : (
+              <Link to={`/courses/${courseId}/lessons`} className="btn btn-primary">
+                {myEnrollment ? t('continue_course') : t('view_enroll')}
+              </Link>
+            )}
           </div>
         ) : (
           <p className="empty-state">{t('no_lessons')}</p>

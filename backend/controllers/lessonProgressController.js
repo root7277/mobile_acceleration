@@ -15,9 +15,15 @@ const completeLesson = (req, res) => {
 
     if (!enrollment) return res.status(404).json({ error: 'Enrollment not found.' });
 
-    const canComplete = (parseInt(videoWatchPercent) >= 90) || req.body.forceComplete;
-    if (!canComplete && videoWatchPercent !== undefined) {
-      return res.json({ completed: false, message: 'Watch 90% of video or click Mark as completed.' });
+    const hasUploadedVideo = lesson.video_url && String(lesson.video_url).trim();
+    const isAdmin = ['admin', 'super_admin'].includes(req.user?.role);
+    const forceComplete = req.body.forceComplete && isAdmin;
+
+    if (hasUploadedVideo) {
+      const pct = parseInt(videoWatchPercent) || 0;
+      if (!forceComplete && pct < 95) {
+        return res.status(400).json({ error: 'Watch at least 95% of the video to complete this lesson.' });
+      }
     }
 
     let lp = db.prepare('SELECT * FROM lesson_progress WHERE user_id = ? AND lesson_id = ?').get(userId, lessonId);

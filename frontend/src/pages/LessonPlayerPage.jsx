@@ -42,6 +42,7 @@ export default function LessonPlayerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [completing, setCompleting] = useState(false);
+  const [videoWatchPercent, setVideoWatchPercent] = useState(0);
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -59,7 +60,6 @@ export default function LessonPlayerPage() {
     setError('');
     try {
       const lessonRes = await api.get(`/lessons/${lessonId}`);
-      console.log('Fetched Lesson Data:', lessonRes.data);
       setLesson(lessonRes.data);
 
       const [courseRes, enrollRes] = await Promise.all([
@@ -70,6 +70,7 @@ export default function LessonPlayerPage() {
       const myEnr = enrollRes.data.find(e => e.course_id == courseId);
       setEnrollment(myEnr);
 
+      setVideoWatchPercent(0);
       try {
         const statusRes = await api.get(`/lessons/course/${courseId}/status`);
         setSidebarLessons(statusRes.data.lessons || []);
@@ -98,7 +99,8 @@ export default function LessonPlayerPage() {
     const v = videoRef.current;
     if (!v || !v.duration || completing) return;
     const pct = Math.floor((v.currentTime / v.duration) * 100);
-    if (pct >= 90) {
+    setVideoWatchPercent(pct);
+    if (pct >= 95) {
       setCompleting(true);
       api.put(`/lesson-progress/${lessonId}/video-progress`, { videoWatchPercent: 100 }).catch(() => {});
     }
@@ -108,11 +110,12 @@ export default function LessonPlayerPage() {
     if (!enrollment) return;
     setCompleting(true);
     try {
-      const { data } = await api.post('/lesson-progress/complete', {
+      const payload = {
         lessonId: parseInt(lessonId),
         enrollmentId: enrollment.id,
-        forceComplete: true
-      });
+        videoWatchPercent: hasVideo ? Math.max(videoWatchPercent, 95) : 100
+      };
+      const { data } = await api.post('/lesson-progress/complete', payload);
       if (data.certificate) {
         alert('Course completed! Certificate generated.');
       }
@@ -235,8 +238,12 @@ export default function LessonPlayerPage() {
 
           {enrollment && (
             <div className="lesson-actions lesson-actions-footer">
-              <button className="btn btn-primary" onClick={handleMarkComplete} disabled={completing}>
-                {completing ? '...' : t('mark_completed')}
+              <button
+                className="btn btn-primary"
+                onClick={handleMarkComplete}
+                disabled={completing || (hasUploadedVideo && videoWatchPercent < 95)}
+              >
+                {completing ? '...' : (hasUploadedVideo && videoWatchPercent < 95) ? `${t('mark_completed')} (${videoWatchPercent}%)` : t('mark_completed')}
               </button>
             </div>
           )}

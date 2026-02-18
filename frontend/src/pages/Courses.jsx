@@ -19,6 +19,7 @@ export default function Courses() {
   }, []);
 
   const enrolledIds = new Set(enrollments.map(e => e.course_id));
+  const completedIds = new Set(enrollments.filter(e => e.is_completed).map(e => e.course_id));
 
   if (loading) {
     return <div className="loading-screen"><div className="spinner" /></div>;
@@ -42,7 +43,11 @@ export default function Courses() {
             <p className="course-desc">{c.description || 'No description.'}</p>
             <p className="course-instructor">Instructor: {c.instructor_name}</p>
             <div className="course-card-footer">
-              {enrolledIds.has(c.id) ? (
+              {completedIds.has(c.id) ? (
+                <span className="btn btn-primary" style={{ opacity: 0.9, cursor: 'default', pointerEvents: 'none' }}>
+                  Completed
+                </span>
+              ) : enrolledIds.has(c.id) ? (
                 <Link to={`/courses/${c.id}`} className="btn btn-primary">
                   Continue Course
                 </Link>
