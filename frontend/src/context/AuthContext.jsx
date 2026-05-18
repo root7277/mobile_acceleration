@@ -22,6 +22,7 @@ export const AuthProvider = ({ children }) => {
       }
       try {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        if (!token) return;
         const { data } = await api.get('/auth/verify');
         setUser(data.user);
         if (data.user?.preferred_language && localStorage.getItem('language') !== data.user.preferred_language) {
